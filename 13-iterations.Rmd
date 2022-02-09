@@ -1,0 +1,115 @@
+---
+title: "Simple Iterations"
+author: "Bastola"
+date: "`r format(Sys.Date(), ' %B %d %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      collapse = TRUE, 
+                      comment=NA, 
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.height = 4, fig.width = 6, fig.align='center')
+
+library(tidyverse) 
+library(lubridate)
+library(stringr)
+library(forcats)
+
+energy <- readr::read_csv("https://raw.githubusercontent.com/deepbas/statdatasets/main/energy.csv",
+                    col_type = cols(
+                     .default = col_double(), 
+                      Timestamp = col_datetime(format = ""),
+                      dayWeek = col_factor(levels=c("Mon","Tues","Wed","Thurs","Fri","Sat","Sun"))
+                     ))
+
+```
+
+## Your Turn 1
+
+Load the `palmerpenguins` package.
+
+Write a `for` loop that calculates the mean of the numeric variables in the `penguins` data set and stores the means in a named vector.
+
+**Solution:** Looking at the `penguins` data set, the columns 3, 4, 5, 6, and 8 could be considered numeric (you could debate the year I suppose).
+
+```{r}
+library(palmerpenguins)
+glimpse(penguins)
+```
+
+We'll use the numeric column index as our vector to iterate over:
+
+```{r}
+numeric_cols <- _________ # indexing the numeric columns
+
+col_means <- ________   # empty vector with NAs to store means
+names(col_means) <- colnames(penguins) # adding col names
+
+# Calculate means for numeric columns
+
+for(i in numeric_cols) {
+  col_means[i] <- _________________
+}
+col_means
+```
+
+
+
+---------------------------------------------------
+
+
+## Your turn 2
+
+**1.** Make a data frame of quantiles for `energy` buildings in columns 9-90 (you will need `na.rm = TRUE`)
+
+```{r}
+glimpse(energy)
+```
+
+
+
+```{r}
+qdf <- energy %>% select(9:90) %>%
+  _______(quantile, probs = seq(.1,.9,.1), _____)
+```
+
+
+**2.**  Add a variable called `stat` to identify the quantile
+
+```{r}
+qdf <- energy %>% select(9:90) %>%
+  ______(quantile, probs = seq(.1,.9,.1), _______) %>%  
+  ______(stat = ____("quantile_", seq(10,90,10))) 
+```
+
+
+**3.**  Reshape the data frame to make variables `stat` (describing the quantile), `building` and `quant` (quantile value)
+
+```{r}
+qdf <- energy %>% select(9:90) %>%
+  map_dfc(quantile, probs = seq(.1,.9,.1), na.rm = TRUE) %>%  
+  mutate(stat = str_c("quantile_", seq(10,90,10))) %>%   
+  ________  # use gather or pivot_longer  
+```
+
+**4.**  Plot the KWH value for each quantile on the x-axis for the buildings `Sayles-Hill`, `Language_&_Dining_Center`, `Olin_Hall_of_Science`
+
+```{r}
+qdf %>% 
+  ______(building %in% c("Sayles-Hill" ,"Language_&_Dining_Center", "Olin_Hall_of_Science"))  %>%  
+  ggplot(aes(x=q, y=parse_number(stat), color=building)) +
+  geom_point() + 
+  geom_line(aes(group=building)) + 
+  labs(y="Percentile (%)",x="KWH") +
+  scale_y_continuous(breaks=seq(10,90,by=10))
+```
+
+
+
+
